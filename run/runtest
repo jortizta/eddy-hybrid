@@ -1,0 +1,5 @@
+#!/bin/bash
+export LD_LIBRARY_PATH=/opt/hdf5-1.8.15-patch1/lib:$LD_LIBRARY_PATH
+ 
+/opt/openmpi/bin/mpirun  -np 32 ./hybrid.x
+ 

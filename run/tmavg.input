@@ -1,0 +1,10 @@
+Sample frequency (time of iterations, must divide ITRES)
+1
+Specify coordinates 0 or indices 1
+1
+X Limits(X1,X2)
+1, 130
+Y Limits(Y1,Y2)
+1, 66
+Z Limits(Z1,Z2)
+1, 130

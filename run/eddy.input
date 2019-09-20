@@ -1,0 +1,331 @@
+*******************************************************************
+*        INPUT-LIST FOR PROGRAM EDDY  (*.input)                   *
+*******************************************************************
+* - this file contains all run-time parameters
+* - lines starting with '*' are only comments
+*
+*
+*******************************************************************
+*----------------- INPUT - OUTPUT FILES AND INFO ------------------
+*******************************************************************
+&STRPRM
+*
+* Grid : 
+        STR1='x1_grid_half.in',
+        STR2='ygrid.dat',
+        STR3='x3_grid.in',
+        STR4='suboff.grd',
+        STR5='stl.input',
+        STR6='./'
+&END
+*
+*******************************************************************
+*------------------  SELECT GRID TYPE IN EACH DIRECTION -----------
+*******************************************************************
+* grid type:
+*       IGRID        0 - uniform, 1 - non-uniform, read from file
+*       JGRID        0 - uniform, 1 - non-uniform, read from file
+*       KGRID        0 - uniform, 1 - non-uniform, read from file
+*      IOGRID        0 - don't write grid files, 1 - write grid files
+*
+&INTGRD 
+        IGRID=1, JGRID=0, KGRID=0,
+       IOGRID=0
+&END
+*
+*******************************************************************
+*------------------  SELECT DOMAIN SIZE -------------------
+*******************************************************************
+* domain size:      
+*       XMIN, XMAX           
+*       YMIN, YMAX         2*PI = 6.283185307179586         
+*       ZMIN, ZMAX
+*
+&CMPDMN
+        XMIN =0, XMAX = 15,
+        YMIN =0, YMAX = 6.283185307179586,
+        ZMIN =6, ZMAX = 46
+
+&END
+*
+*******************************************************************
+*------------------  SELECT BOUNDARY CONDITIONS -------------------
+*******************************************************************
+* boundary numbering:        1 - 'west'            2 - 'east'
+*                            3 - 'back'            4 - 'front'
+*                            5 - 'bottom'          6 - 'top'
+*
+&BNDPRM 
+* if ITYPE(2)=82 > div blows, why ?
+
+        ITYPE(1)=300,  ITYPE(2)=82, 
+        ITYPE(3)=500,  ITYPE(4)=500, 
+        ITYPE(5)=305,  ITYPE(6)=730
+&END
+*
+*
+*******************************************************************
+* ------------- SELECT SGS MODEL AND PRESSURE SOLVER --------------
+*******************************************************************
+*
+* ischm - time advancement scheme:
+*			1  -  Adams-Bashforth
+*			3  -  Runge-Kutta
+* ibm   - immersed boundary method:
+*       0  without immersed body;
+*       1  with stationary immersed bodies;
+*       2  with moving immersed bodies.
+* isgs  
+*       - subgr. model:  0  - no turbulence model
+*                        1  - Smagorinsky model
+*                        2  - dynamic model with homogeneous direction average
+*                        3  - Lagrangian model without restart file
+*                             (starting with homogeneous direction average)
+*                        4  - Lagrangian model
+*                        5  - FSF model
+*                        6  - WALE model
+* ipres 
+*       - pressure corr. 1  - direct solver ( fft + blktri )
+*                        2  - direct solver ( fft + genbun )
+*                        3  - direct solver ( fft + fft + tridag)
+* ifield  - initial solution
+*			 0 - scratch
+*			 1 - begin time accurate
+*			 2 - continue time accurate 
+*
+* idens - stratification:  0 - no, 1 - yes
+
+
+&SOLPRM 
+        ischm=3, ibm=0, isgs=0, ipres=1, ifield=1, idens=1, inoise=0
+&END
+*
+*
+*******************************************************************
+*--------------------------- ITERATIONS ---------------------------
+*******************************************************************
+* itmax  - total number of iterations
+* itini  - number of iterations without sampling data
+* itscr  - number of iter. between screen information
+* istat  - number of iter. between stat. data
+* itser  - number of iter. between time series
+* itres  - number of iter. between restart file
+* itpln  - number of iterations between writing plane file
+* itpost - number of iterations between the postprocessing files
+* it5p  - writing data files: 0 - no, 1 - yes
+* kmin5p - start of streamwise grid point for postprocessing
+* kmax5p - end of streamwise grid point for postprocessing
+* ivrtx  - 0 stress calc. at center of triangles, 1 at triangle nodes
+* itbdy  - number of iter. between immersed object stresses
+* itcalf - number of iter. between lift&drag force calculation
+* it2d   - number of iter. between y-averaged field
+* itVPfield - number of iter. between  VPfield files 
+* nwrite - current stat. file no.
+* nwrite2d - current file no. for print 2D fields on meridian sections
+* nwritebdy - current no. for file with imb stress 
+* iolvl  - parameter for tagging statistics and forces on the boundary
+*          (<=0: no print; >0: print)
+* ioclock - parameter for writing profiling info to file
+*          (<=0: no print; >0: print)
+*
+&ITRPRM 
+        ITMAX=1000000, ITINI=10000000, ITSCR=1, ISTAT=2000000, ITSER=0,
+        ITRES=1, ITPOST=250, IT5P=0, KMIN5P=670, KMAX5P=680, ITPLN=200, 
+        IVRTX=0, ITBDY=1000, 
+        ITCALF=10, IT2D=0,
+        ITVPFIELD=0, NWRITE=0, NWRITE2D=0, NWRITEBDY=0,
+        IOLVL=1, IOCLOCK=1
+&END
+*
+*
+*******************************************************************
+* --------------------- FLOW PARAMETERS ---------------------------
+*******************************************************************
+* ru1 - 1 / Reynolds number
+* css - constant for Smagorinsky model
+* eps - constant for dynamic model to truncate small Imm & Ilm
+* dpdx
+* dpdy
+* dpdz
+* gt1 - starting time for the ramping 
+* gt2 - end time for the ramping
+* g_orig - final value of the gravity
+
+&FLOPRM
+      ru1 = 5e-4,
+      css = 0.1,
+      eps = 1.e-16,
+      dpdx = 0.,
+      dpdy = 0.,
+      dpdz = 0.0,
+      frn  = 1.,
+      prn  = 1.,
+      denP1 = -1.0,
+      rho_0 = 1.0
+      gt1 = 0.0
+      gt2 = 0.0
+      g_orig = 0.25
+&END
+*
+*******************************************************************
+* ----------------------------- CONTRL-- --------------------------
+*******************************************************************
+*icyl   :  0  cartesian coordinates;      1  cylindrical coordinates
+
+
+*implx  :  0  explicit viscous terms in x direction;    1  implicit
+*imply  :  0  explicit viscous terms in y direction;    1  implicit
+*implz  :  0  explicit viscous terms in z direction;    1  implicit
+*implcx :  0  explicit convective terms in x direction;    1  implicit 
+*implcy :  0  explicit convective terms in y direction;    1  implicit 
+*implcz :  0  explicit convective terms in z direction;    1  implicit
+*implxdcmp :  0  fully implicit in x: 1 implicit in x in part(s) of the domain 
+*implydcmp :  0  fully implicit in y: 1 implicit in y in part(s) of the domain
+*implzdcmp :  0  fully implicit in z: 1 implicit in z in part(s) of the domain
+*icalf  :  0  no drag & lift calculation; 1  compute drag & lift
+*icfl   :  0  constant time step;         1  constant CFL number
+*
+&CONTRL
+	 icyl = 1, implx = 0, imply = 1, implz = 0,
+         implcx = 0, implcy = 0, implcz = 0,
+         implxdcmp = 0, implydcmp = 0, implzdcmp = 0,
+	 icalf = 1, icfl  = 0
+&END
+*
+******************************************************************
+* -------------------- IMMERSED OBJECT PARAMETERS -----------------
+*******************************************************************
+*iprsdv :  0 dpdn near body analytically;1  2 fluid points     ;  2 hybrid scheme
+*ivelrcn:  0 linear interpolation; 1 polynomial recontruction
+*uext1  :  Extension in grid cells for first velocity point (ivelrcn=1)
+*uext2  :  Extension in grid cells for second velocity point (ivelrcn>=2)
+*uext3  :  Extension in grid cells for third velocity point (ivelrcn>=3)
+*nflu   :  Number of maximum loops of velocity forcing points
+*nflp   :  Number of maximum loops of pressure correction points
+*idomy  :  1 Domain decomposition in y-dir for immersed boundary
+*          tasks (tagging, force calc.); 0 Domain decomposition in z-dir
+*imb3d  :  1: 3D immersed body, 0: 2D immersed body (for cartesian coor)
+*imbdcmp:  0 Immersed object is not decomposed; 1 Immersed object is decomposed
+*imbovlp:  If imbdcmp is 1 how much overlap (absolute length) there is between procs domains
+*nfcmax :  Maximum number of velocity or pressure forcing points, used in declaring array sizes
+*nintmax:  Maximum number of velocity or pressure interior points, used in declaring array sizes
+*nntr2d :  Max no. of nearest neighbour triangles for 2D distance (used for tagging of in/out)
+*nntr3d :  Max no. of nearest neighbour triangles for 3D distance (used for finding normal intersections)
+*itagy  :  0 Don't consider j neighbors for velocity forcing points, 1 Consider j neighbors
+*igrdint:  Grid interpolation method: 0 aligned with local imb normal; 1 aligned with local and the extension point is fluid
+*
+&IMBPRM
+         iprsdv = 0, ivelrcn=1, uext1=1.0, uext2=2.0, uext3=4.1, 
+         nflu=30, nflp = 200, idomy=0, imb3d=1, imbdcmp=0, imbovlp=0.06, 
+         nfcmax = 800000, nintmax=40000, nntr2d=100, nntr3d=25
+         itagy = 0, igrdint = 1 
+         imls = 0, izero = 1
+&END
+*
+*******************************************************************
+* ----------------------------- TIMESTEP --------------------------
+*******************************************************************
+*cflc      -  constant cfl number
+*tstep     -  constant timestep
+*dtsave    -  interval to save files   ! currently not used
+*tini      -  initialization time
+*
+&TIMEST
+     cflc   = 2.0,
+     tstep  = 2e-3,
+     dtsave = .5,
+     tini   = 0.0,
+     resstep= 5
+&END
+*
+*
+*******************************************************************
+* ----------------------------- STATS -----------------------------
+*******************************************************************
+*itmprb    -  0 no time probes; 1 write probe vars to file; 2 append to file
+*itke      -  0 no tke info; 1 write vars for tke to file; 2 append to file
+*             currently not used
+*yspctr    -  0 no spectra in y-dir; 1 write spectra to file; 2 append to file
+*itmavg    -  0 no time averaged sampling of variables; 1 write to file; 2 append to file
+*iregtmavg -  0 no time averaged sampling of variables; 1 write to file; 2 append to file
+*
+&STATS
+         itmprb = 1, itke = 0, yspctr = 0, itmavg = 0, iregtmavg = 0
+&END
+*
+*
+*******************************************************************
+* ----------------MOVING WALL BOUNDARY CONDITIONS------------------
+*******************************************************************
+*umov1:  - u velocity of the moving wall in smaller index side
+*umov2:  - u velocity of the moving wall in larger  index side
+*vmov1:  - u velocity of the moving wall in smaller index side
+*vmov2:  - u velocity of the moving wall in larger  index side
+*wmov1:  - u velocity of the moving wall in smaller index side
+*wmov2:  - u velocity of the moving wall in larger  index side
+&MOVWAL
+     umov1 = 0., umov2 = 0., 
+     vmov1 = 0., vmov2 = 0.,
+     wmov1 = 0., wmov2 = 0.
+&END
+*
+*******************************************************************
+* ---------------DUMMY PARAMETERS FOR VARIOUS FLOWS----------------
+*******************************************************************
+*fre:  - frequency of the oscilation
+*amp:  - angular rotational speed for golfball
+*cphs: - phase speed of the wave U = 17.9845085694 cphs = 7.1938034278
+*kwav: - wave number
+*dummyfp1: - Dummy flow parameter (for Blasius corresponds to a=0.5)
+*dummyfp2: - Dummy flow parameter (for Blasius corresponds to b=1.0)
+*dummyfp3: - Dummy flow parameter (length of origin for Blasius)
+*dummyfp4: - Dummy flow parameter (height of origin for Blasius, used with ibm>0)
+*
+&DUMPRM
+         fre = 0.0, amp = 55.4, cphs = 7.1938034278, kwav = 4.,
+         dummyfp1 = 1.0, dummyfp2 = 0.0, dummyfp3 = 160.0,
+         dummyfp4 = 1.00, dummyfp5 = 0.0
+&END
+*
+*
+*******************************************************************
+*
+*******************************************************************
+* --------------PARAMETERS FOR INPUT/OUTPUT OPERATIONS-------------
+*******************************************************************
+*recunit:  - Record unit for direct access open of files
+*            1 for Intel Compiler; 4 for GNU Compiler; unknown for Portland
+&IOPRMS
+         recunit = 1, BACKGROUND_TIME = 1
+&END
+*
+*
+*******************************************************************
+* --------------PARAMETERS FOR HYBRID-------------
+*******************************************************************
+*
+*start_feed:  - Starting number of the hybrid planes 
+*end_feed:    - Final number of the hybrid planes 
+*stride_feed: - Stride to loop over the hybrid planes 
+*index_feed:  - Index of the streamwise location of the inlet planes 
+*index_feed:  - Path to the hybrid inlet planes wo final / 
+ 
+&HYBPRM
+        start_feed = 21010, end_feed=27940, stride_feed=10,
+         index_feed=724,
+         path_feed='/work/jose/hybrid-test-be-2/run/hybrid-planes'
+&END
+*
+*
+*******************************************************************
+* ---------------------SET UP GRID---------------------------------
+*******************************************************************
+*nx     :  - 
+*ny     :  - 
+*nz     :  -
+&GRIDDM
+         nx=302,ny=130,nz=1026,nxprocs=1,nyprocs=1,nzprocs=32
+&END
+*
+*
+******************************************************************

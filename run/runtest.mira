@@ -1,0 +1,31 @@
+#!/bin/bash
+# cp /Work3/anikesh/code_backup/run/Eddy.x .; 
+#cp /work/temp/SF2s_RK3_ADI/ibm.x .; ./cleanup; rm wake.log -f; ./setup_results_Sturb; ./grid.x; ./ibm_nars_03.x > wake.log
+#cp /work/temp/SF2s_RK3_ADI/ibm.x .; ./cleanup; rm wake.log -f; ./setup_results_Sturb; ./grid.x; ./ibm_adi_nars_par.x > wake.log
+
+# serial tester
+#cp /work/temp/SF2s_RK3_ADI/ibm.x .; ./cleanup; rm wake.log -f; ./setup_results_Sturb; ./grid.x; ./ibm.x > wake.log
+# parallel tester
+#cd /adjust/spatICs rm inletplane*; cd results/spatICs mv inletplane* /Work/anikesh/testcf/adjust/spatICs/; ./cleanup; ./setup_results_Sturb; ./grid.x; mpirun -np 1 ./sturb.x > wake.log
+#rm -rf *.pln
+#rm -rf *.q
+rm -rf *.plt 
+rm -rf *.out
+#rm -rf *.tno
+#rm -rf *.xyz 
+rm -rf vtkfiles/*.vtk
+#rm -rf vtkfiles/*.plt
+
+
+export LD_LIBRARY_PATH=/usr/local/hdf5/lib/:$LD_LIBRARY_PATH
+#export LD_LIBRARY_PATH="/usr/local/hdf5/lib/"
+
+
+
+# scp -r /Work3/anikesh/code_May14/run/Eddy.x  
+# mpirun -mca btl ^openib -np 8 ./Eddy.x   
+
+mpirun -mca btl ^openib -np 16 ./Eddy.x 
+
+
+#./Eddy.x
