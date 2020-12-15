@@ -5,7 +5,7 @@
         
 	include 'common.h'
         include 'mpif.h'
-	integer :: nx,ny,nz,icycle,iu,iv,iw,dir,index1,index2,iProc
+	integer :: nx,ny,nz,icycle,iu,iv,iw,dir,index1,index2,iProc,dummy
 	real	:: dtm1,time
 	real    :: xu(nx),yv(ny)
 	real    :: xc(nx),yc(ny)
@@ -36,7 +36,7 @@
 
         write(filename,'(2a,i4.4,a,i8.8,a)')
      &  trim(path_feed),"/hybrid_k",
-     &  index1,"_n", icycle,".feed"
+     &  index1,"_n", icycle,".interp"
 
         open(210,file=filename,form='unformatted',status='unknown',readonly)
         write(210) icycle,TIME,dtm1,grav,1.0,1/ru1,1.0
@@ -66,7 +66,7 @@
         include 'common.h'
         include 'mpif.h'
 
-        integer nx,ny,nz,i,j,k,icycle,s1
+        integer nx,ny,nz,i,j,k,icycle,s1,dummy
         character(len=600) :: filename        
         real uo(nx,ny,nz),vo(nx,ny,nz),wo(nx,ny,nz),dens(nx,ny,nz)
         real xc(nx),yc(ny)
@@ -84,7 +84,7 @@
 
         write(filename,'(2a,i4.4,a,i8.8,a)')
      &  trim(path_feed),"/hybrid_k",
-     &  index_feed,"_n", start_feed,".feed"
+     &  index_feed,"_n", start_feed,".interp"
 
         IF (myrank==0) THEN
 
@@ -92,10 +92,11 @@
 
         open(211,file=trim(filename),form='unformatted',
      &  status='old',action='read',iostat=s1)
-        read(211) icycleRead,timeRead,dtm1Read,gravRead,rhoRead,ReRead,PrRead
-        read(211) dirRead,indexRead
+        read(211) icycleRead
+        read(211) timeRead,dtm1Read,gravRead,rhoRead,ReRead,PrRead
+        read(211) dirRead,dummy,indexRead
         read(211) zcgRead, zwgRead
-        read(211) nxRead, nyRead
+        read(211) nxRead,dummy, nyRead
         read(211) xcRead, xuRead
         read(211) ycRead, yvRead
         read(211) planeU
@@ -107,6 +108,11 @@
         close(211)
 
         deallocate(xuRead,yvRead,xcRead,ycRead)        
+
+
+        !planeU=0.0
+        !planeV=0.0
+        !planeW=1.0
 
         ENDIF
    
@@ -157,7 +163,7 @@
         
 	include 'common.h'
         include 'mpif.h'
-        integer :: nx,ny,icycle,s1,status
+        integer :: nx,ny,icycle,s1,status,dummy
 	integer :: nxRead,nyRead,nzRead,icycleRead,dirRead,index1,indexRead
 	real	:: dtm1Read,timeRead
 	real,allocatable,dimension(:) :: xuRead,yvRead
@@ -174,10 +180,11 @@
 
         open(211,file=trim(filename),form='unformatted',
      &  status='old',action='read',iostat=s1)
-        read(211) icycleRead,timeRead,dtm1Read,gravRead,rhoRead,ReRead,PrRead
-        read(211) dirRead,indexRead
+        read(211) icycleRead
+        read(211) timeRead,dtm1Read,gravRead,rhoRead,ReRead,PrRead
+        read(211) dirRead,dummy,indexRead
         read(211) zcgRead, zwgRead
-        read(211) nxRead, nyRead
+        read(211) nxRead,dummy,nyRead
         read(211) xcRead, xuRead
         read(211) ycRead, yvRead
         read(211) planeU
@@ -204,16 +211,18 @@
         end
 
 	subroutine sequence_hybrid(planeU,planeV,planeW,planeD,
+     &  planeURef,planeVRef,planeWRef,planeDRef,
      &  icycle,nx,ny)
 
         
 	include 'common.h'
         include 'mpif.h'
         integer :: nx,ny,icycle,index1
-        character(len=300) :: filename        
+        character(len=600) :: filename,filenameRef        
         real :: planeU(nx,ny),planeV(nx,ny),planeW(nx,ny),planeD(nx,ny)
+        real :: planeURef(nx,ny),planeVRef(nx,ny),planeWRef(nx,ny),planeDRef(nx,ny)
         integer :: num_feed, n_feed_cycles,icycle_feed
-        integer i
+        integer :: i,j
  
         num_feed=(end_feed-start_feed)/stride_feed+1
         
@@ -229,10 +238,23 @@
         
         write(filename,'(2a,i4.4,a,i8.8,a)')
      &  trim(path_feed),"/hybrid_k",
-     &  index_feed,"_n", icycle_feed,".feed"
+     &  index_feed,"_n", icycle_feed,".interp"
 
-        call read_hybrid(trim(filename),planeU,planeV,planeW,planeD,nx,ny)
-       
+
+        call read_hybrid(filename,planeU,planeV,planeW,planeD,nx,ny)
+
+        do j=1,ny
+        do i=116,nx  !from r=1 impose the steady state IGW field
+
+        planeU(i,j) = planeURef(i,j)
+        planeV(i,j) = planeVRef(i,j)
+        planeW(i,j) = planeWRef(i,j)
+        planeD(i,j) = planeDRef(i,j)
+
+        enddo
+        enddo
+
+      
         return
         end
 
