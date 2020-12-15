@@ -329,7 +329,8 @@ c.... Pipe flow
       character*160 icycle_string
 
       real,allocatable,dimension(:,:) :: planeU,planeV,planeW,planeD
-
+      real,allocatable,dimension(:,:) :: planeURef,planeVRef,planeWRef,planeDRef
+      character*600 filenameRef 
 ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 c                                                 directories
 
@@ -350,7 +351,8 @@ c...input parameters (namelist-statements)
 c
 
       begin_time=tclock()
-      save_res = .TRUE.
+      save_res = .FALSE.
+      ttotal=1.0
 
       CALL INPALL(nx,ny,nz,nzg)
 
@@ -449,7 +451,7 @@ C
         ALLOCATE(RHA(NX,NY,NZ),RHB(NX,NY,NZ),RS(NX,NY,NZ))
         ALLOCATE(DENS(NX,NY,NZ))
         allocate(planeU(nx,ny),planeV(nx,ny),planeW(nx,ny),planeD(nx,ny))
-
+        allocate(planeURef(nx,ny),planeVRef(nx,ny),planeWRef(nx,ny),planeDRef(nx,ny))
 
       clock(1) = tclock() - clock(1)
 c
@@ -569,6 +571,13 @@ c
 
       call hybrid_init(uo,vo,wo,dens,xc,yc,nx,ny,nz,
      & planeU,planeV,planeW,planeD)
+
+        IF (MYRANK==256) THEN
+
+        WRITE(*,*)'WO(100,65,5)',WO(100,65,5)
+
+        ENDIF
+
 
 	CALL BOUNDARY(UO,VO,WO,XU,XC,YV,YC,ZW,ZC,NX,NY,NZ,TIME)  
 	CALL BOUNDARY_DENS(DENS,XC,YC,NX,NY,NZ)
@@ -794,8 +803,17 @@ c        CALL IOMPI_3DSCALAR(trim(hspdir)//'res.ini.p',P,NX,NY,NZ,IDIR)
 !         CALL HDF5_MPI_3DREAL(trim(hspdir)//'res.ini.dens',DENS,NX,NY,NZ,IDIR)
         ENDIF
 
+        write(filenameRef,'(2a,i4.4,a,i8.8,a)')
+     &  trim(path_feed),"/hybrid_k",
+     &  index_feed,"_n", end_feed,".interp"
+
+        call read_hybrid(filenameRef,planeURef,planeVRef,planeWRef,planeDRef,nx,ny)
+
         call sequence_hybrid(planeU,planeV,planeW,planeD,
+     &  planeURef,planeVRef,planeWRef,planeDRef,
      &  nstep-1,nx,ny)         
+
+        
 
 
 ! If restarting after interpolation add
@@ -1688,23 +1706,6 @@ c                                            compute turbulent viscosity
 c-----------------------------------------------------------------------
 c
 
-        if((tclock()-begin_time) .ge. background_time) then
-
-      write(*,*) 'ENTERING SAVING LOOP' 
- 
-      write(*,*) 'begin time', begin_time 
-
-      write(*,*) 'background_time', background_time 
- 
-          if(save_res) then
-                  itres = icycle + 2
-                  if (myrank .eq. 0) then
-                          print*, itres
-                  endif
-                  save_res = .FALSE.
-          endif
-        endif      
-
       IF(ISGS/=0) THEN
 
         clock(37) = tclock()
@@ -2099,7 +2100,15 @@ c
 c
 c.....time step
 c
+
       clocktemp = tclock()
+
+      if((tclock()-begin_time) .ge. ttotal*background_time) then
+      IF(MYRANK==0) WRITE(*,*) 'CHANGING SAVE RES'
+      SAVE_RES=.TRUE.
+      ttotal=ttotal+1.0
+      endif
+
 
       if(icfl==1) then
 c
@@ -2977,7 +2986,9 @@ C
 	  IF(MYRANK.EQ.0) then 
 
           WRITE(*,*)"**********END OF RK substep**************",is
-          call sequence_hybrid(planeU,planeV,planeW,planeD,icycle,nx,ny)
+          call sequence_hybrid(planeU,planeV,planeW,planeD,
+     &    planeURef,planeVRef,planeWRef,planeDRef,
+     &    icycle,nx,ny)
           endif
 C
 C-----------------------------------------------------------------------
@@ -3330,7 +3341,7 @@ C
 !      ttotal=ttotal+dtm1
       clocktemp = tclock()
 
-      IF(MOD(ICYCLE,ITPOST)==0.OR.MOD(ICYCLE,ITPOST)==1) THEN
+      IF(MOD(ICYCLE,ITPOST)==0.OR.MOD(ICYCLE,ITPOST)==0) THEN
         if(it5p == 1) then
           nstep=icycle
           IFIELD = 2
@@ -3360,7 +3371,7 @@ C
         endif
       ENDIF
 
-      IF(ITRES/=0.AND.MOD(ICYCLE,ITRES)==0) THEN
+      IF(ITRES/=0.AND.MOD(ICYCLE,ITRES)==0 .OR. SAVE_RES) THEN
 
         IF(MYRANK==0) THEN
           write(6,*) ' Begin write restarting file ...',icycle,time
@@ -3398,7 +3409,7 @@ c        CALL IOMPI_3DSCALAR(trim(hspdir)//'p.res', P,NX,NY,NZ,IDIR)
 !         CALL HDF5_MPI_3DREAL(ICfile,DENS,NX,NY,NZ,IDIR)
         endif
 
-
+        SAVE_RES=.FALSE.
 
 c        call write_var_arc(p,xc,yc,zc,nx,ny,nz)
 c        DP(:,1,:) = SUM(WO(:,2:NY-1,:),2)/REAL(NY-2)
